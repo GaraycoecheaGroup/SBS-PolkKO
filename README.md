@@ -1,5 +1,5 @@
 # Polk_mutagenesis
-This GitLab project contains the code for the following research manuscript:
+This GitHub project contains the code for the following research manuscript:
 
 **Polk and DNA repair suppress tissue-specific mutagenesis by endogenous guanine adducts**<br>
 
