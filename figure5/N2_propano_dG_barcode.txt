@@ -1,0 +1,2 @@
+sample_id	barcode
+N2_propano_dG	GAATCTAG
