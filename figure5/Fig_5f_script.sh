@@ -6,6 +6,11 @@
     #input fq: fastq files before multiplexing
     #barcode.txt: tsv with sample_id (column 1) and barcode (column 2), the header is needed, the file need to end with an empty line
     #parameter for fqtk demux may need to change depende on experimental design
+    #The output *_merged.fq.gz need to be analyzed using SIQ (https://github.com/RobinVanSchendel/SIQ) with:
+    ##left: CCGCGAAGACAGCCCTCTTC
+    ##right: GCTCTTCTTTCGTGCGCGGC
+    ##max base error of 0.001
+    #Plots were made using https://knipscheergroup.shinyapps.io/rshiny/ 
 
 
 #loop for processing each sample
