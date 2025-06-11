@@ -1,0 +1,7 @@
+
+from SigProfilerMatrixGenerator.scripts import SigProfilerMatrixGeneratorFunc as matGen
+matrices = matGen.SigProfilerMatrixGeneratorFunc(project="Polk", reference_genome="mm10", path_to_input_files="./input",plot=True, exome=False, bed_file=None, chrom_based=False, tsb_stat=True, seqInfo=True, cushion=100)
+
+from SigProfilerExtractor import sigpro as sig
+sigProfilerExtractor(input_type="vcf", output="extraction", input_data="./input", reference_genome="mm10", context_type = "96,384,DINUC,ID", exome = False, minimum_signatures=1, maximum_signatures=10, nmf_replicates=100, resample = True, batch_size=1, cpu=-1, gpu=False, nmf_init="random", precision= "single", matrix_normalization= "gmm", seeds= "random", min_nmf_iterations= 10000, max_nmf_iterations=1000000, nmf_test_conv= 10000, nmf_tolerance= 1e-15, get_all_signature_matrices= False)
+
