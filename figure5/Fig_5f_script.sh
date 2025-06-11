@@ -1,16 +1,17 @@
 #!/bin/bash
 #Yang Jiang, 2024
+#script to generate Fig 5f from fig_4f_start_data.tsv
+
+#creat conda env:
+#conda create --name plasmid python=3.11
+#conda install -c bioconda fqtk bwa samtools umi_tools fgbio
 
 #Usage: ./MutSeq_analysis_YJ.sh input_R1.fq input_R2.fq ref.fa barcode.txt num_threads
     #order of input can not be changed
     #input fq: fastq files before multiplexing
     #barcode.txt: tsv with sample_id (column 1) and barcode (column 2), the header is needed, the file need to end with an empty line
     #parameter for fqtk demux may need to change depende on experimental design
-    #The output *_merged.fq.gz need to be analyzed using SIQ (https://github.com/RobinVanSchendel/SIQ) with:
-    ##left: CCGCGAAGACAGCCCTCTTC
-    ##right: GCTCTTCTTTCGTGCGCGGC
-    ##max base error of 0.001
-    #Plots were made using https://knipscheergroup.shinyapps.io/rshiny/ 
+    #the output R1 and R2 files can be further analysed using SIQ (https://github.com/RobinVanSchendel/SIQ)
 
 
 #loop for processing each sample
@@ -40,11 +41,7 @@ tail -n +2 $4 | while IFS=$'\t' read -r row _; do
 
   #conver bam to fastq
   bedtools bamtofastq -i "$row"/"$row".clipped.bam -fq "$row"/"$row"_clean.R1.fq -fq2 "$row"/"$row"_clean.R2.fq
-
-  #merge read pair
-  bbmerge.sh in1="$row"/"$row"_clean.R1.fq in2="$row"/"$row"_clean.R2.fq out="$row"/"$row"_merged.fq outu="$row"/"$row"_unmerged.fq pfilter=1 ihist=ihist.txt
-  gzip "$row"/"$row"_merged.fq
-
-  rm "$row"/"$row"_unmerged.fq "$row"/"$row".bam "$row"/"$row".bam.bai "$row"/"$row".dedup.bam "$row"/"$row".dedup.bam.bai "$row"/"$row".clipped.bam "$row"/"$row"_clean.R2.fq "$row"/"$row"_clean.R1.fq "$row"/"$row"_clipping_mx.txt ihist.txt "$row"/"$row".clipped_sorted.bam "$row"/"$row".clipped_sorted.bam.bai "$row"/"$row".nsorted.bam
-
+  gzip "$row"/"$row"_clean.R1.fq
+  gzip "$row"/"$row"_clean.R2.fq
+  
 done
