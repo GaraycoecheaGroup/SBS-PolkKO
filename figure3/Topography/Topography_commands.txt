@@ -1,0 +1,22 @@
+from SigProfilerTopography import Topography as topography
+
+jobname = "Polk"
+inputDir = "path_to_vcf_files/"
+outputDir = "outputDir/"
+numofSimulations = 500
+
+topography.runAnalyses(
+    "mm10",
+    inputDir,
+    outputDir,
+    jobname,
+    numofSimulations,
+    parallel_mode=False,
+    sbs_probabilities="SBS_DeNovo_s2_Probabilities_refit.txt",
+    dbs_probabilities="DBS_COSMIC_Probabilities_refit.txt",
+    epigenomics=False,
+    nucleosome=False,
+    replication_time=False,
+    strand_bias=True,
+    processivity=False,
+    discreet_mode=False)
