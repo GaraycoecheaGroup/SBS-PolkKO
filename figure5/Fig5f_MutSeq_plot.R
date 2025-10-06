@@ -1,8 +1,7 @@
 #!/usr/bin/env Rscript
 #Yang Jiang 30.07.2025
-#for plot the mpileup output from MutSeq analysis pipeline
-#need readr, ggplot, reshape2 installed
-#could be used in command line
+#to plot the mpileup files
+
 
 library(readr)
 library(tibble)
@@ -10,9 +9,6 @@ library(reshape2)
 library(ggplot2)
 library(stringr)
 library(dplyr)
-library(cowplot)
-library(grid)
-library(gridExtra)
 
 Sys.setenv(VROOM_CONNECTION_SIZE=100000000)
 
@@ -36,7 +32,7 @@ fill_empty <- function(df) {
   return(df)
 }
 
-file.path <- "/path/to/fig5f_mpileup"
+file.path <- "/Users/yangjiang/Library/CloudStorage/OneDrive-HubrechtInstitute/Bioinformatic/MutSeq/202507_Koichi/fig5f_mpileup"
 position.modification <- 3287
 
 file.list <- list.files(path = file.path,pattern = ".txt.gz",full.names = TRUE)
@@ -44,13 +40,7 @@ sample_names <- list.files(path = file.path,pattern = ".txt.gz",full.names = FAL
 #sample_names <- str_sub(sample_names,1,-19)
 
 sample_names <- gsub(".mpileup.txt.gz", "", sample_names)
-df.correction <- read_delim("/path/to/Fig5f_correction_factors.tsv",delim = "\t",col_names = TRUE)
-
-
-plot.order <- c("pM_AA_Mock_180_exp2","pM_AA_DeltaPolK_180_exp2",
-                "pM_ACR_Mock_180_exp2","pM_ACR_DeltaPolK_180_exp2",
-                "pCtrl_Mock","pCtrl_Polk")
-
+df.correction <- read_delim("/Users/yangjiang/Library/CloudStorage/OneDrive-HubrechtInstitute/Bioinformatic/MutSeq/202507_Koichi/Fig5f_correction_factors.tsv",delim = "\t",col_names = TRUE)
 
 df.mut.all <- data.frame()
 df.plot.all <- data.frame()
@@ -79,7 +69,7 @@ colnames(df.plot)[c(1,2)] <- c("position","chr_position")
 colnames(df.plot)[colnames(df.plot)=="X"] <- "indel"
  
 df.plot <- melt(df.plot,id.vars = 1:3,variable.name = "type",value.name = "percent")
-df.plot$percent_corrected <- df.plot$percent/df.correction$Correction_factor[i]
+df.plot$percent_corrected <- df.plot$percent/as.numeric(df.correction[df.correction$sample_names==sample_names[i],2])
 df.plot$sample <- sample_names[i]
 
 df.plot$type <- factor(df.plot$type,levels = c("A","C","G","T","indel"))
@@ -97,66 +87,7 @@ if (i==1) {
   df.depth <- rbind(df.depth,df.depth.temp)
 }
 
-#for grouped analysis:
-df.plot.distal <- df.plot[df.plot$chr_position<(position.modification-20) | df.plot$chr_position>(position.modification+20),]
-df.plot.proximal <- df.plot[df.plot$chr_position>=(position.modification-20) & df.plot$chr_position<=(position.modification+20),]
-
-df.mut.pre.5 <- df.plot.proximal[df.plot.proximal$type!="indel" & df.plot.proximal$chr_position<position.modification & df.plot.proximal$chr_position>=position.modification-5,]
-df.mut.pre.5$position <- "proximal.pre.1-5bp"
-df.mut.pre.15 <- df.plot.proximal[df.plot.proximal$type!="indel" & df.plot.proximal$chr_position<position.modification-5,]
-df.mut.pre.15$position <- "proximal.pre.6-20bp"
-df.mut.mod <- df.plot.proximal[df.plot.proximal$type!="indel" & df.plot.proximal$chr_position==position.modification,]
-df.mut.mod$position <- "modified"
-df.mut.post <- df.plot.proximal[df.plot.proximal$type!="indel" & df.plot.proximal$chr_position>position.modification,]
-df.mut.post$position <- "proximal.post"
-df.mut.distal <- df.plot.distal[df.plot.proximal$type!="indel",]
-df.mut.distal$position <- "distal"
-
-df.mut <- rbind(df.mut.pre.5,df.mut.pre.15,df.mut.mod,df.mut.post,df.mut.distal)
-
-#write_delim(df.mut,paste(file.path,sample_names[i],"_perbase_mut_percentage.tsv",sep = ""),delim = "\t",col_names = TRUE,)
-
-df.mut$mut <- paste(df.mut$REF,">",df.mut$type,sep = "")
-
-df.mut$mut2 <- df.mut$mut
-df.mut$mut2.count <- 1
-
-df.mut$mut2[df.mut$mut2=="G>A"] <- "C>T"
-df.mut$mut2[df.mut$mut2=="G>C"] <- "C>G"
-df.mut$mut2[df.mut$mut2=="G>T"] <- "C>A"
-df.mut$mut2[df.mut$mut2=="A>C"] <- "T>G"
-df.mut$mut2[df.mut$mut2=="A>G"] <- "T>C"
-df.mut$mut2[df.mut$mut2=="A>T"] <- "T>A"
-
-df.mut.simple.a <- aggregate(percent ~ mut2 + position, data = df.mut, sum)
-df.mut.simple.b <- aggregate(mut2.count  ~ mut2 + position, data = df.mut, sum)
-df.mut.simple.c <- aggregate(percent_corrected ~ mut2 + position, data = df.mut, sum)
-
-#df.mut.simple <- left_join(df.mut.simple.a,df.mut.simple.b)
-df.mut.simple <- left_join(df.mut.simple.a,df.mut.simple.c)
-df.mut.simple <- left_join(df.mut.simple,df.mut.simple.b)
-
-df.mut.simple$sample <- sample_names[i]
-df.mut.simple$position <- factor(df.mut.simple$position, levels = c("proximal.pre.1-5bp","proximal.pre.6-20bp","modified","proximal.post","distal"))
-df.mut.simple$mut2 <- factor(df.mut.simple$mut2, levels = c("C>A","C>G","C>T","T>A","T>C","T>G","A>indel","C>indel","G>indel","T>indel"))
-df.mut.simple <- df.mut.simple[!is.na(df.mut.simple$mut2),]
-df.mut.simple <- df.mut.simple[order(df.mut.simple$position),]
-
-df.mut.simple <- df.mut.simple %>%
-  group_by(position) %>%
-  mutate(SumPercent = sum(percent)) 
-
-#percentage of the mutation type in each group
-df.mut.simple$compostion <- 100*df.mut.simple$percent/df.mut.simple$SumPercent
-
-if (i==1) {df.mut.all <- df.mut.simple} 
-else { 
-  df.mut.all <- rbind(df.mut.all,df.mut.simple)
 }
-}
-
-#write_delim(df.plot.all,paste(file.path,"PerBase_mut_percentage_allSamples.tsv",sep = ""),delim = "\t",col_names = TRUE,)
-#write_delim(df.mut.all,paste(file.path,"PerGroup_mut_percentage_allSamples.tsv",sep = ""),delim = "\t",col_names = TRUE,)
 
 
 df.plot.proximal.10 <- df.plot.all[df.plot.all$chr_position>=(position.modification-10) & df.plot.all$chr_position<=(position.modification+10),]
@@ -236,3 +167,4 @@ ggsave(filename = paste(file.path,"/withoutID_corrected/",plot.order[i],"_withou
 
 
 }
+
